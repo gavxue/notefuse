@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db } from "@/lib/db/index";
 import { chats } from "@/lib/db/schema";
 import { loadS3IntoPinecone } from "@/lib/pinecone";
 import { getS3Url } from "@/lib/s3";
@@ -12,9 +12,8 @@ export async function POST(req: Request, res: Response) {
   }
   try {
     const { file_key, file_name } = await req.json();
-    console.log(file_key, file_name);
-    const pages = await loadS3IntoPinecone(file_key);
-    const chat_id = await db
+    await loadS3IntoPinecone(file_key);
+    const chat = await db
       .insert(chats)
       .values({
         fileKey: file_key,
@@ -23,18 +22,17 @@ export async function POST(req: Request, res: Response) {
         userId: userId,
       })
       .returning({
-        insertedId: chats.id,
+        id: chats.id,
       });
 
     return NextResponse.json(
       {
-        chat_id: chat_id[0].insertedId,
+        chat_id: chat[0].id,
       },
       { status: 200 }
     );
-    return NextResponse.json({ pages });
   } catch (error) {
-    console.error(error);
+    console.error("error creating chat", error);
     return NextResponse.json(
       { error: "internal server error" },
       { status: 500 }

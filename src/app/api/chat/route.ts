@@ -9,11 +9,12 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const { messages, chatId } = await req.json();
-    const _chats = await db.select().from(chats).where(eq(chats.id, chatId));
-    if (_chats.length != 1) {
+    const userChats = await db.select().from(chats).where(eq(chats.id, chatId));
+    if (userChats.length != 1) {
+      console.error("chat not found");
       return NextResponse.json({ error: "chat not found" }, { status: 404 });
     }
-    const fileKey = _chats[0].fileKey;
+    const fileKey = userChats[0].fileKey;
     const lastMessage = messages[messages.length - 1];
     const context = await getContext(lastMessage.content, fileKey);
 
@@ -57,7 +58,12 @@ export async function POST(req: Request) {
 
     return response.toDataStreamResponse();
   } catch (error) {
-    console.log(error);
-    throw error;
+    console.error("error sending message", error);
+    return NextResponse.json(
+      {
+        error: "internal server error",
+      },
+      { status: 500 }
+    );
   }
 }

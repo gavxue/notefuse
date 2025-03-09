@@ -20,21 +20,26 @@ async function ChatPage({ params }: Props) {
     return redirect("/sign-in");
   }
 
-  const _chats = await db.select().from(chats).where(eq(chats.userId, userId));
-  if (!_chats) {
-    return redirect("/");
-  }
-  if (!_chats.find((chat) => chat.id === parseInt(chatId))) {
+  const userChats = await db
+    .select()
+    .from(chats)
+    .where(eq(chats.userId, userId));
+
+  if (!userChats || userChats.length === 0) {
     return redirect("/");
   }
 
-  const currentChat = _chats.find((chat) => chat.id === parseInt(chatId));
+  const currentChat = userChats.find((chat) => chat.id == parseInt(chatId));
+
+  if (!currentChat) {
+    return redirect("/");
+  }
 
   return (
     <div className="flex max-h-screen overflow-scroll">
       <div className="flex w-full max-h-screen overflow-scroll">
         <div className="flex-[1] max-w-xs">
-          <ChatSideBar chats={_chats} chatId={parseInt(chatId)} />
+          <ChatSideBar chats={userChats} chatId={parseInt(chatId)} />
         </div>
         <div className="flex-[5] max-h-screen p-4 overflow-scroll">
           <PDFViewer pdf_url={currentChat?.pdfUrl || ""} />

@@ -21,7 +21,6 @@ export default function ChatComponent({ chatId }: Props) {
       return response.data;
     },
   });
-  // console.log(data);
 
   const { input, handleInputChange, handleSubmit, messages } = useChat({
     api: "/api/chat",
@@ -50,7 +49,10 @@ export default function ChatComponent({ chatId }: Props) {
         <h3 className="text-xl font-bold">Chat</h3>
       </div>
 
-      <MessageList messages={[...(data || []), ...messages]} isLoading={isLoading} />
+      <MessageList
+        messages={[...(data || []), ...messages]}
+        isLoading={isLoading}
+      />
 
       <form
         onSubmit={handleSubmit}
