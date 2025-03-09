@@ -5,7 +5,6 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { Document } from "@langchain/core/documents";
 import { getEmbeddings } from "./embeddings";
 import md5 from "md5";
-import { metadata } from "@/app/layout";
 import { convertToAscii } from "./utils";
 
 export const getPineconeClient = () => {
@@ -22,29 +21,34 @@ type PDFPage = {
 };
 
 export async function loadS3IntoPinecone(fileKey: string) {
-  console.log("downloading s3 into file system");
-  // getting pdf
-  const file_name = await downloadFromS3(fileKey);
-  if (!file_name) {
-    throw new Error("could not downlaod from s3");
+  try {
+    console.log("downloading s3 into file system");
+    // getting pdf
+    const file_name = await downloadFromS3(fileKey);
+    if (!file_name) {
+      throw new Error("could not downlaod from s3");
+    }
+    const loader = new PDFLoader(file_name);
+    const pages = (await loader.load()) as PDFPage[];
+
+    // splitting and segmenting pdf
+    const documents = await Promise.all(pages.map(prepareDocument));
+
+    // vectorise and embed documents
+    const vectors = await Promise.all(documents.flat().map(embedDocument));
+
+    // upload to pinecone
+    const client = await getPineconeClient();
+    const pineconeIndex = client.Index("notefuse");
+    const namespace = pineconeIndex.namespace(convertToAscii(fileKey));
+
+    console.log("inserting vectors into pinecone");
+    await namespace.upsert(vectors);
+    return documents[0];
+  } catch (error) {
+    console.error("error loading document from s3 to pinecone", error);
+    throw error;
   }
-  const loader = new PDFLoader(file_name);
-  const pages = (await loader.load()) as PDFPage[];
-
-  // splitting and segmenting pdf
-  const documents = await Promise.all(pages.map(prepareDocument));
-
-  // vectorise and embed documents
-  const vectors = await Promise.all(documents.flat().map(embedDocument));
-
-  // upload to pinecone
-  const client = await getPineconeClient();
-  const pineconeIndex = client.Index("chatpdf");
-  const namespace = pineconeIndex.namespace(convertToAscii(fileKey));
-
-  console.log("inserting vectors into pinecone");
-  await namespace.upsert(vectors);
-  return documents[0];
 }
 
 async function embedDocument(doc: Document) {
@@ -61,7 +65,7 @@ async function embedDocument(doc: Document) {
       },
     } as PineconeRecord;
   } catch (error) {
-    console.log("error embedding document", error);
+    console.error("error embedding document", error);
     throw error;
   }
 }

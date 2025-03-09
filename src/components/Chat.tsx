@@ -4,14 +4,14 @@ import { Send } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Message, useChat } from "@ai-sdk/react";
-import MessageList from "./MessageList";
+import MessageList from "./Messages";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
 type Props = { chatId: number };
 
-export default function ChatComponent({ chatId }: Props) {
+export default function Chat({ chatId }: Props) {
   const { data, isLoading } = useQuery({
     queryKey: ["chat", chatId],
     queryFn: async () => {

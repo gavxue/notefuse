@@ -8,7 +8,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-const FileUpload = () => {
+export default function Upload() {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const { mutate, status } = useMutation({
@@ -89,6 +89,4 @@ const FileUpload = () => {
       </div>
     </div>
   );
-};
-
-export default FileUpload;
+}

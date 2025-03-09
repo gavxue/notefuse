@@ -10,7 +10,7 @@ type Props = {
   chatId: number;
 };
 
-export default function ChatSideBar({ chats, chatId }: Props) {
+export default function Sidebar({ chats, chatId }: Props) {
   return (
     <div className="w-full h-screen p-4 text-gray-200 bg-gray-900">
       <Link href="/">
