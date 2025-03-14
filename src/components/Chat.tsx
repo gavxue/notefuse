@@ -8,6 +8,7 @@ import MessageList from "./Messages";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { Card } from "./ui/card";
 
 type Props = { chatId: number };
 
@@ -41,33 +42,32 @@ export default function Chat({ chatId }: Props) {
   }, [messages]);
 
   return (
-    <div
-      className="relative max-h-sceren overflow-scroll"
-      id="message-container"
-    >
-      <div className="sticky top-0 inset-x-0 p-2 bg-white h-fit">
-        <h3 className="text-xl font-bold">Chat</h3>
-      </div>
+    <Card className="max-h-screen">
+      <div className="overflow-scroll" id="message-container">
+        <div className="sticky top-0 inset-x-0 p-2 bg-white h-fit">
+          <h3 className="text-xl font-bold">Chat</h3>
+        </div>
 
-      <MessageList
-        messages={[...(data || []), ...messages]}
-        isLoading={isLoading}
-      />
-
-      <form
-        onSubmit={handleSubmit}
-        className="sticky bottom-0 inset-x-0 px-2 py-4 bg-white"
-      >
-        <Input
-          value={input}
-          onChange={handleInputChange}
-          placeholder="Ask any question..."
-          className="w-full"
+        <MessageList
+          messages={[...(data || []), ...messages]}
+          isLoading={isLoading}
         />
-        <Button className="bg-blue-600 ml-2">
-          <Send className="h-4 w-4" />
-        </Button>
-      </form>
-    </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="sticky bottom-0 inset-x-0 px-2 py-4 bg-white"
+        >
+          <Input
+            value={input}
+            onChange={handleInputChange}
+            placeholder="Ask any question..."
+            className="w-full"
+          />
+          <Button className="bg-blue-600 ml-2">
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
+      </div>
+    </Card>
   );
 }
