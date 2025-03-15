@@ -42,10 +42,10 @@ async function ChatPage({ params }: Props) {
 
   return (
     <SidebarProvider>
-      <LeftSidebar chats={userChats} chatId={parseInt(chatId)} />
-      <SidebarInset>
+        <LeftSidebar chats={userChats} chatId={parseInt(chatId)} />
+        <SidebarInset>
           <div className="flex">
-            <SidebarTrigger className="absolute ml-1" />
+            {/* <SidebarTrigger className="absolute ml-1" /> */}
             {/* <div className="flex-[1] max-w-xs">
               <Sidebar chats={userChats} chatId={parseInt(chatId)} />
             </div> */}
@@ -56,7 +56,7 @@ async function ChatPage({ params }: Props) {
               <Viewer pdf_url={currentChat?.pdfUrl || ""} />
             </div>
           </div>
-      </SidebarInset>
+        </SidebarInset>
     </SidebarProvider>
   );
 }

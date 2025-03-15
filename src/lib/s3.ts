@@ -9,10 +9,18 @@ const s3Client = new S3Client({
   },
 });
 
+function sanitizeFileName(fileName: string): string {
+  // replace any special characters and spaces with hyphens
+  return fileName
+    .replace(/[^a-zA-Z0-9.-]/g, '-') 
+    .replace(/-+/g, '-')             
+    .toLowerCase();                  
+}
+
 export async function uploadToS3(file: File) {
   try {
-    const file_key =
-      "uploads/" + Date.now().toString() + file.name.replace(" ", "-");
+    const sanitizedName = sanitizeFileName(file.name);
+    const file_key = `uploads/${Date.now().toString()}-${sanitizedName}`;
 
     const uploadParams = {
       Bucket: process.env.NEXT_PUBLIC_S3_AWS_BUCKET_NAME!,
@@ -39,11 +47,18 @@ export async function uploadToS3(file: File) {
     });
   } catch (error) {
     console.error("Error uploading file:", error);
+    throw error; 
   }
 }
 
 export function getS3Url(file_key: string) {
-  const url = `https://${process.env.NEXT_PUBLIC_S3_AWS_BUCKET_NAME}.s3.us-east-2.amazonaws.com/${file_key}`;
-
-  return url;
+  const bucketName = process.env.NEXT_PUBLIC_S3_AWS_BUCKET_NAME;
+  const s3Domain = `https://${bucketName}.s3.us-east-2.amazonaws.com`;
+  
+  // check if file_key already has proper encoding
+  const encodedKey = file_key.includes('%') ? 
+    file_key : 
+    encodeURIComponent(file_key).replace(/%2F/g, '/');
+  
+  return `${s3Domain}/${encodedKey}`;
 }

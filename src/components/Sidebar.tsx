@@ -24,6 +24,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -68,7 +69,11 @@ export default function LeftSidebar({ chats, chatId }: Props) {
                 {chats.map((chat) => (
                   <SidebarMenuSubItem key={chat.id}>
                     <SidebarMenuSubButton asChild>
-                      <Link key={chat.id} href={`/chat/${chat.id}`} className="truncate">
+                      <Link
+                        key={chat.id}
+                        href={`/chat/${chat.id}`}
+                        className="truncate"
+                      >
                         {chat.pdfName}
                       </Link>
                     </SidebarMenuSubButton>
