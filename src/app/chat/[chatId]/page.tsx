@@ -44,8 +44,8 @@ async function ChatPage({ params }: Props) {
     <SidebarProvider>
       <LeftSidebar chats={userChats} chatId={parseInt(chatId)} />
       <SidebarInset>
-          <div className="flex h-full">
-            <SidebarTrigger className="ml-1" />
+          <div className="flex">
+            <SidebarTrigger className="absolute ml-1" />
             {/* <div className="flex-[1] max-w-xs">
               <Sidebar chats={userChats} chatId={parseInt(chatId)} />
             </div> */}

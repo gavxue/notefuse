@@ -66,7 +66,7 @@ export default function LeftSidebar({ chats, chatId }: Props) {
             <SidebarMenuItem>
               <SidebarMenuSub>
                 {chats.map((chat) => (
-                  <SidebarMenuSubItem>
+                  <SidebarMenuSubItem key={chat.id}>
                     <SidebarMenuSubButton asChild>
                       <Link key={chat.id} href={`/chat/${chat.id}`} className="truncate">
                         {chat.pdfName}
