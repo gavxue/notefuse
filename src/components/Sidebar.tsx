@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import {
   BadgeCheck,
   ChevronsUpDown,
+  Loader2,
   LogOut,
   MessageCircle,
+  MessageSquare,
+  Plus,
   PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,8 +18,10 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
+  SidebarInput,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -36,6 +41,12 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
+import { uploadToS3 } from "@/lib/s3";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { useRef, useState } from "react";
 
 type Props = {
   chats: DrizzleChat[];
@@ -43,9 +54,117 @@ type Props = {
 };
 
 export default function LeftSidebar({ chats, chatId }: Props) {
+  const router = useRouter();
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { mutate, status } = useMutation({
+    mutationFn: async ({
+      file_key,
+      file_name,
+    }: {
+      file_key: string;
+      file_name: string;
+    }) => {
+      const response = await axios.post("/api/create-chat", {
+        file_key,
+        file_name,
+      });
+      return response.data;
+    },
+  });
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // check file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const data = await uploadToS3(file);
+      if (!data?.file_key || !data.file_name) {
+        console.error("error uploading to s3");
+        toast.error("Something went wrong");
+        return;
+      }
+
+      mutate(data, {
+        onSuccess: ({ chat_id }) => {
+          toast.success("Chat created!");
+          router.push(`/chat/${chat_id}`);
+        },
+        onError: (error) => {
+          console.error("error creating chat", error);
+          toast.error("Error creating chat");
+        },
+      });
+    } catch (error) {
+      console.error("error uploading file", error);
+      toast.error("Error uploading file");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  // const { getRootProps, getInputProps } = useDropzone({
+  //   accept: { "application/pdf": [".pdf"] },
+  //   maxFiles: 1,
+  //   onDrop: async (acceptedFiles) => {
+  //     //   console.log(acceptedFiles);
+  //     const file = acceptedFiles[0];
+  //     if (file.size > 10 * 1024 * 1024) {
+  //       toast.error("File too large");
+  //       return;
+  //     }
+
+  //     try {
+  //       setUploading(true);
+  //       const data = await uploadToS3(file);
+  //       if (!data?.file_key || !data.file_name) {
+  //         toast.error("Something went wrong");
+  //         return;
+  //       }
+  //       mutate(data, {
+  //         onSuccess: ({ chat_id }) => {
+  //           toast.success("Chat created!");
+  //           router.push(`/chat/${chat_id}`);
+  //         },
+  //         onError: (err) => {
+  //           toast.error("Error creating chat");
+  //         },
+  //       });
+
+  //       console.log("data", data);
+  //     } catch (error) {
+  //       console.log(error);
+  //     } finally {
+  //       setUploading(false);
+  //     }
+  //   },
+  // });
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
+        <div className="flex items-center justify-between px-4 py-2">
+          <Link href="/">
+            <h1 className="text-xl font-bold">notefuse</h1>
+          </Link>
+          {/* <Button variant="ghost" size="icon" asChild>
+            <Link href="/">
+              <Plus className="h-5 w-5" />
+              <span className="sr-only">New Chat</span>
+            </Link>
+          </Button> */}
+        </div>
+      </SidebarHeader>
+      {/* <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -59,92 +178,105 @@ export default function LeftSidebar({ chats, chatId }: Props) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent className="">
+      </SidebarHeader> */}
+      <SidebarContent className="p-3">
         <SidebarGroup>
           <SidebarGroupLabel>Chats</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuSub>
-                {chats.map((chat) => (
-                  <SidebarMenuSubItem key={chat.id}>
-                    <SidebarMenuSubButton asChild>
-                      <Link
-                        key={chat.id}
-                        href={`/chat/${chat.id}`}
-                        className="truncate"
-                      >
-                        {chat.pdfName}
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                ))}
-                <SidebarMenuSubItem>
-                  <Button variant="outline" className="w-full truncate" asChild>
-                    <Link href="/">
-                      <PlusCircle className="mr-2 w-4 h-4" />
-                      New Chat
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {chats.map((chat) => (
+                <SidebarMenuItem key={chat.id}>
+                  <SidebarMenuButton asChild>
+                    <Link
+                      key={chat.id}
+                      href={`/chat/${chat.id}`}
+                      className="truncate"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span>{chat.pdfName}</span>
                     </Link>
-                  </Button>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
-            </SidebarMenuItem>
-          </SidebarMenu>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
-                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                  </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Gavin Xue</span>
-                    <span className="truncate text-xs">gavin@gmail.com</span>
-                  </div>
-                  <ChevronsUpDown className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                align="end"
-                sideOffset={4}
-              >
-                <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <Avatar className="h-8 w-8 rounded-lg">
-                      {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
-                      <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                    </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">Gavin Xue</span>
-                      <span className="truncate text-xs">gavin@gmail.com</span>
-                    </div>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <BadgeCheck />
-                    Account
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <LogOut />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <div className="p-4">
+          <Button
+            className="w-full truncate"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading || status === "pending" ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Uploading...</span>
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                <span>New Chat</span>
+              </>
+            )}
+          </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".pdf"
+            className="hidden"
+          />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            >
+              <Avatar className="h-8 w-8 rounded-lg">
+                {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
+                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">Gavin Xue</span>
+                <span className="truncate text-xs">gavin@gmail.com</span>
+              </div>
+              <ChevronsUpDown className="ml-auto size-4" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            align="end"
+            sideOffset={4}
+          >
+            <DropdownMenuLabel className="p-0 font-normal">
+              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                <Avatar className="h-8 w-8 rounded-lg">
+                  {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
+                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Gavin Xue</span>
+                  <span className="truncate text-xs">gavin@gmail.com</span>
+                </div>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <BadgeCheck />
+                Account
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <LogOut />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

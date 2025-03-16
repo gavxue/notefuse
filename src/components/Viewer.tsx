@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "./ui/button";
-import { Card } from "./ui/card";
+import { Card, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from "lucide-react";
 import "react-pdf/dist/esm/Page/TextLayer.css";
@@ -11,8 +11,6 @@ import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 
 // Set the worker source for PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
-// pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 type Props = {
   pdf_url: string;
@@ -47,10 +45,13 @@ export default function Viewer({ pdf_url }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <Card className="m-4 p-4 flex flex-col h-full">
+    <div className="flex flex-col h-screen overflow-hidden p-4">
+      <Card className="flex flex-col h-full">
+        <CardHeader className="border-b py-3">
+          <CardTitle className="text-lg">Document Viewer</CardTitle>
+        </CardHeader>
         {/* Controls */}
-        <div className="flex items-center justify-between mb-4">
+        {/* <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
@@ -86,10 +87,10 @@ export default function Viewer({ pdf_url }: Props) {
               <ZoomIn size={16} />
             </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* PDF Document */}
-        <div className="flex-1 overflow-auto bg-muted/20 flex justify-center">
+        <div className="flex-1 overflow-auto bg-muted/20 flex justify-center m-4">
           <Document
             file={pdf_url}
             onLoadSuccess={onDocumentLoadSuccess}
@@ -99,13 +100,24 @@ export default function Viewer({ pdf_url }: Props) {
               </div>
             }
           >
-            <Page
+              {numPages &&
+                Array.from({ length: numPages }).map((_, i) => (
+                  <Page
+                    key={i + 1}
+                    pageNumber={i + 1}
+                    scale={scale}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    className="shadow-lg mb-4"
+                  />
+                ))}
+              {/* <Page
               pageNumber={pageNumber}
               scale={scale}
               renderTextLayer={true}
               renderAnnotationLayer={true}
               className="shadow-lg"
-            />
+            /> */}
           </Document>
         </div>
       </Card>
