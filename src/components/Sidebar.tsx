@@ -47,6 +47,7 @@ import { uploadToS3 } from "@/lib/s3";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useRef, useState } from "react";
+import { useUser, useClerk } from "@clerk/nextjs";
 
 type Props = {
   chats: DrizzleChat[];
@@ -57,6 +58,8 @@ export default function LeftSidebar({ chats, chatId }: Props) {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isSignedIn, user, isLoaded } = useUser();
+  const { signOut } = useClerk();
 
   const { mutate, status } = useMutation({
     mutationFn: async ({
@@ -112,43 +115,6 @@ export default function LeftSidebar({ chats, chatId }: Props) {
     }
   };
 
-  // const { getRootProps, getInputProps } = useDropzone({
-  //   accept: { "application/pdf": [".pdf"] },
-  //   maxFiles: 1,
-  //   onDrop: async (acceptedFiles) => {
-  //     //   console.log(acceptedFiles);
-  //     const file = acceptedFiles[0];
-  //     if (file.size > 10 * 1024 * 1024) {
-  //       toast.error("File too large");
-  //       return;
-  //     }
-
-  //     try {
-  //       setUploading(true);
-  //       const data = await uploadToS3(file);
-  //       if (!data?.file_key || !data.file_name) {
-  //         toast.error("Something went wrong");
-  //         return;
-  //       }
-  //       mutate(data, {
-  //         onSuccess: ({ chat_id }) => {
-  //           toast.success("Chat created!");
-  //           router.push(`/chat/${chat_id}`);
-  //         },
-  //         onError: (err) => {
-  //           toast.error("Error creating chat");
-  //         },
-  //       });
-
-  //       console.log("data", data);
-  //     } catch (error) {
-  //       console.log(error);
-  //     } finally {
-  //       setUploading(false);
-  //     }
-  //   },
-  // });
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -156,29 +122,8 @@ export default function LeftSidebar({ chats, chatId }: Props) {
           <Link href="/">
             <h1 className="text-xl font-bold">notefuse</h1>
           </Link>
-          {/* <Button variant="ghost" size="icon" asChild>
-            <Link href="/">
-              <Plus className="h-5 w-5" />
-              <span className="sr-only">New Chat</span>
-            </Link>
-          </Button> */}
         </div>
       </SidebarHeader>
-      {/* <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                X
-              </div>
-              <span className="truncate font-semibold">Notefuse</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader> */}
       <SidebarContent className="p-3">
         <SidebarGroup>
           <SidebarGroupLabel>Chats</SidebarGroupLabel>
@@ -236,12 +181,18 @@ export default function LeftSidebar({ chats, chatId }: Props) {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarImage
+                  src={user?.imageUrl}
+                  alt={user?.username ?? "user"}
+                />
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Gavin Xue</span>
-                <span className="truncate text-xs">gavin@gmail.com</span>
+                <span className="truncate font-semibold">
+                  {user?.firstName} {user?.lastName}
+                </span>
+                <span className="truncate text-xs">
+                  {user?.emailAddresses[0].toString()}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -254,24 +205,23 @@ export default function LeftSidebar({ chats, chatId }: Props) {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarImage
+                    src={user?.imageUrl}
+                    alt={user?.username ?? "user"}
+                  />
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Gavin Xue</span>
-                  <span className="truncate text-xs">gavin@gmail.com</span>
+                  <span className="truncate font-semibold">
+                    {user?.firstName} {user?.lastName}
+                  </span>
+                  <span className="truncate text-xs">
+                    {user?.emailAddresses[0].toString()}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => signOut({ redirectUrl: "/" })}>
               <LogOut />
               Log out
             </DropdownMenuItem>
