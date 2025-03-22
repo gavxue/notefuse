@@ -46,8 +46,9 @@ import axios from "axios";
 import { uploadToS3 } from "@/lib/s3";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
 
 type Props = {
   chats: DrizzleChat[];
@@ -114,6 +115,16 @@ export default function LeftSidebar({ chats, chatId }: Props) {
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      console.log(user);
+    }
+  }, [isLoaded, isSignedIn]);
+
+  // if (!isLoaded) {
+  //   return null;
+  // }
 
   return (
     <Sidebar collapsible="icon">
