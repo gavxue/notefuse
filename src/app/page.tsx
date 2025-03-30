@@ -50,7 +50,7 @@ export default async function Home() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-2 pl-4">
             <Sparkles className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">NoteFuse</span>
+            <span className="text-xl font-bold">notefuse</span>
           </div>
           {/* <nav className="hidden md:flex gap-6">
             <Link

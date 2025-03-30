@@ -23,7 +23,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ChatPDF",
+  title: "notefuse",
+  description:
+    "NoteFuse uses AI to turn your study notes into engaging conversations, helping you understand complex topics and retain information better.",
 };
 
 export default function RootLayout({
