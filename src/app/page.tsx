@@ -13,14 +13,6 @@ import Upload from "@/components/Upload";
 import { db } from "@/lib/db";
 import { chats } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { HeroSection } from "@/components/Hero";
 
 export default async function Home() {
   const { userId, redirectToSignIn } = await auth();
@@ -93,7 +85,7 @@ export default async function Home() {
               <span className="text-primary">Interactive Study Sessions</span>
             </h1>
             <p className="max-w-[700px] text-muted-foreground md:text-xl">
-              NoteFuse uses AI to turn your study notes into engaging
+              notefuse uses AI to turn your study notes into engaging
               conversations, helping you understand complex topics and retain
               information better.
             </p>
@@ -134,7 +126,7 @@ export default async function Home() {
       </main>
       <footer className="border-t">
         <div className="py-8 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} NoteFuse. All rights reserved.
+          © {new Date().getFullYear()} notefuse.
         </div>
       </footer>
     </div>
