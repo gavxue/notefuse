@@ -28,6 +28,7 @@ export async function uploadToS3(file: File) {
       Body: file,
     };
 
+    // upload file to bucket
     const upload = new Upload({
       client: s3Client,
       params: uploadParams,

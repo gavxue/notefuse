@@ -17,9 +17,11 @@ export async function downloadFromS3(file_key: string) {
         Key: file_key,
       };
 
+      // get the file
       const obj = await s3.getObject(params);
       const file_name = `/tmp/pdf-${Date.now().toString()}.pdf`;
 
+      // return the file
       if (obj.Body instanceof require("stream").Readable) {
         const file = fs.createWriteStream(file_name);
         // @ts-ignore

@@ -8,6 +8,7 @@ const openai = new OpenAI({
 
 export async function getEmbeddings(text: string) {
   try {
+    // use text embedding model to create embeddings
     const embedding = await openai.embeddings.create({
       model: "text-embedding-3-small",
       input: text.replace(/\n/g, " "),
