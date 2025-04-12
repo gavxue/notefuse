@@ -11,7 +11,7 @@ An AI-powered chatbot that assists with summarizing notes and study materials.
 - Langchain: creating vector embedding for RAG
 
 ## Design
-
+![notefuse_diagram](https://github.com/user-attachments/assets/38aba74e-61f9-48fa-a9b5-8470576c8f04)
 
 ## Features to be added
 - multiple document upload for an individual chat
