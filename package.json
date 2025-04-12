@@ -38,6 +38,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.39.3",
+    "esbuild": "^0.25.0",
     "framer-motion": "^12.5.0",
     "langchain": "^0.3.19",
     "lucide-react": "^0.475.0",
