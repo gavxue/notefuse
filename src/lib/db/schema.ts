@@ -8,8 +8,10 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+// enum for user and system messages
 export const userSystemEnum = pgEnum("user_system_enum", ["system", "user"]);
 
+// chat schema
 export const chats = pgTable("chats", {
   id: serial("id").primaryKey(),
   pdfName: text("pdf_name").notNull(),
@@ -19,8 +21,10 @@ export const chats = pgTable("chats", {
   fileKey: text("file_key").notNull(),
 });
 
+// create type
 export type DrizzleChat = typeof chats.$inferSelect;
 
+// messages schema
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
   chatId: integer("chat_id")

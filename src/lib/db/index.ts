@@ -7,6 +7,7 @@ if (!process.env.DATABASE_URL) {
 
 const connectionString = process.env.DATABASE_URL;
 
+// create database client
 const client = postgres(connectionString, {
   prepare: false,
   max: 3,
@@ -14,6 +15,7 @@ const client = postgres(connectionString, {
   connect_timeout: 10,
 });
 
+// initialize orm
 const db = drizzle(client);
 
 export { db };

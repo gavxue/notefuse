@@ -7,6 +7,7 @@ import { getEmbeddings } from "./embeddings";
 import md5 from "md5";
 import { convertToAscii } from "./utils";
 
+// create pinecone client
 export const getPineconeClient = () => {
   return new Pinecone({
     apiKey: process.env.PINECONE_API_KEY!,
@@ -20,14 +21,17 @@ type PDFPage = {
   };
 };
 
+// process a pdf into vector database
 export async function loadS3IntoPinecone(fileKey: string) {
   try {
+    // getting pdf from s3
     console.log("downloading s3 into file system");
-    // getting pdf
     const file_name = await downloadFromS3(fileKey);
     if (!file_name) {
       throw new Error("could not downlaod from s3");
     }
+
+    // extract text
     const loader = new PDFLoader(file_name);
     const pages = (await loader.load()) as PDFPage[];
 
@@ -38,12 +42,12 @@ export async function loadS3IntoPinecone(fileKey: string) {
     const vectors = await Promise.all(documents.flat().map(embedDocument));
 
     // upload to pinecone
-    const client = await getPineconeClient();
+    console.log("inserting vectors into pinecone");
+    const client = getPineconeClient();
     const pineconeIndex = client.Index("notefuse");
     const namespace = pineconeIndex.namespace(convertToAscii(fileKey));
-
-    console.log("inserting vectors into pinecone");
     await namespace.upsert(vectors);
+
     return documents[0];
   } catch (error) {
     console.error("error loading document from s3 to pinecone", error);
@@ -51,11 +55,14 @@ export async function loadS3IntoPinecone(fileKey: string) {
   }
 }
 
+// generates embeddings for a document
 async function embedDocument(doc: Document) {
   try {
+    // get embeddings and create unique hash
     const embeddings = await getEmbeddings(doc.pageContent);
     const hash = md5(doc.pageContent);
 
+    // returns embeddings with metadata
     return {
       id: hash,
       values: embeddings,
@@ -70,16 +77,20 @@ async function embedDocument(doc: Document) {
   }
 }
 
+// converts string to bytes and slices to specified limit, then converts back
 export const truncateStringByBytes = (str: string, bytes: number) => {
   const enc = new TextEncoder();
   return new TextDecoder("utf-8").decode(enc.encode(str).slice(0, bytes));
 };
 
+// preprocesses document
 async function prepareDocument(page: PDFPage) {
   let { pageContent, metadata } = page;
+
+  // cleans up text
   pageContent = pageContent.replace(/\n/g, "");
 
-  // split docs
+  // split text into meaningful chunks, truncating text to prevent exceeding size limits
   const splitter = new RecursiveCharacterTextSplitter();
   const docs = await splitter.splitDocuments([
     new Document({

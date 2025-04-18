@@ -1,9 +1,11 @@
 import { S3 } from "@aws-sdk/client-s3";
 import fs from "fs";
 
+// downloads file from s3
 export async function downloadFromS3(file_key: string) {
   return new Promise(async (resolve, reject) => {
     try {
+      // create s3 client
       const s3 = new S3({
         region: "us-east-2",
         credentials: {
@@ -17,11 +19,11 @@ export async function downloadFromS3(file_key: string) {
         Key: file_key,
       };
 
-      // get the file
+      // get the file and create temporary file name
       const obj = await s3.getObject(params);
       const file_name = `/tmp/pdf-${Date.now().toString()}.pdf`;
 
-      // return the file
+      // streams file into file system
       if (obj.Body instanceof require("stream").Readable) {
         const file = fs.createWriteStream(file_name);
         // @ts-ignore
