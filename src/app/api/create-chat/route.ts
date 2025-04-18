@@ -5,14 +5,20 @@ import { getS3Url } from "@/lib/s3";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+// endpoint that creates a new chat for the use upon pdf submission
 export async function POST(req: Request, res: Response) {
+  // check if user is authorized
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+
   try {
+    // loads the document in vector database
     const { file_key, file_name } = await req.json();
     await loadS3IntoPinecone(file_key);
+
+    // insert the chat info into database
     const chat = await db
       .insert(chats)
       .values({
@@ -25,6 +31,7 @@ export async function POST(req: Request, res: Response) {
         id: chats.id,
       });
 
+    // return the chat id
     return NextResponse.json(
       {
         chat_id: chat[0].id,

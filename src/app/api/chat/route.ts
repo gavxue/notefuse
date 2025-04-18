@@ -6,18 +6,23 @@ import { Message, streamText } from "ai";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
+// endpoint that handles user message and generates ai responses
 export async function POST(req: Request) {
   try {
+    // gets message and chat from request
     const { messages, chatId } = await req.json();
     const userChats = await db.select().from(chats).where(eq(chats.id, chatId));
     if (userChats.length != 1) {
       console.error("chat not found");
       return NextResponse.json({ error: "chat not found" }, { status: 404 });
     }
+
+    // context retrieval using message and file
     const fileKey = userChats[0].fileKey;
     const lastMessage = messages[messages.length - 1];
     const context = await getContext(lastMessage.content, fileKey);
 
+    // system promp to define ai behaviour
     const prompt = {
       role: "system",
       content: `You are an AI assistant specialized in summarizing documents. 
@@ -42,6 +47,7 @@ export async function POST(req: Request) {
       // `,
     };
 
+    // stream the ai response while inserting messages into database
     const response = streamText({
       model: openai("gpt-4o"),
       messages: [
