@@ -5,6 +5,7 @@ import { openai } from "@ai-sdk/openai";
 import { Message, streamText } from "ai";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import redis from "@/lib/redis";
 
 // endpoint that handles user message and generates ai responses
 export async function POST(req: Request) {
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     const lastMessage = messages[messages.length - 1];
     const context = await getContext(lastMessage.content, fileKey);
 
-    // system promp to define ai behaviour
+    // system prompt to define ai behaviour
     const prompt = {
       role: "system",
       content: `You are an AI assistant specialized in summarizing documents. 
@@ -55,6 +56,8 @@ export async function POST(req: Request) {
         ...messages.filter((message: Message) => message.role === "user"),
       ],
       onStepFinish: async (result) => {
+        // insert user and ai messages into db
+        console.log("updated db chat messages");
         await db.insert(_messages).values({
           chatId,
           content: lastMessage.content,
@@ -65,6 +68,10 @@ export async function POST(req: Request) {
           content: result.text,
           role: "system",
         });
+
+        // invalidating cached chat messages
+        console.log("invalidating cached chat messages");
+        await redis.del(chatId.toString());
       },
     });
 
